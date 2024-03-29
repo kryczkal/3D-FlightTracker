@@ -49,7 +49,7 @@ public class FlightTrackerApp : GameWindow
         // Generate a vertex buffer object
         vertexBufferObject = GL.GenBuffer();
         GL.BindBuffer(BufferTarget.ArrayBuffer, vertexBufferObject);
-        GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
+        GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.DynamicDraw);
 
         vertexArrayObject = GL.GenVertexArray();
         GL.BindVertexArray(vertexArrayObject);
@@ -86,6 +86,7 @@ public class FlightTrackerApp : GameWindow
         {
             Close();
         }
+        RotateVertices(vertices, 0.0001f);
     }
 
     protected override void OnFramebufferResize(FramebufferResizeEventArgs e)
@@ -93,11 +94,26 @@ public class FlightTrackerApp : GameWindow
         base.OnFramebufferResize(e);
 
         GL.Viewport(0, 0, e.Width, e.Height);
+
     }
 
     protected override void OnUnload()
     {
         base.OnUnload();
         shader.Dispose();
+    }
+
+    private void RotateVertices(float[] vertices, float degree)
+    {
+        float x, y;
+        for (int i = 0; i < vertices.Length; i+= 3)
+        {
+            x = vertices[i];
+            y = vertices[i + 1];
+            vertices[i] = x * MathF.Cos(degree) - y * MathF.Sin(degree);
+            vertices[i + 1] = x * MathF.Sin(degree) + y * MathF.Cos(degree);
+        }
+        GL.BindBuffer(BufferTarget.ArrayBuffer, vertexBufferObject);
+        GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.DynamicDraw);
     }
 }
