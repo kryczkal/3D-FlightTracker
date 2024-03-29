@@ -70,6 +70,11 @@ public class Shader : IDisposable
         GL.DeleteShader(FragmentShader);
     }
 
+    public int GetAttribLocation(string attribName)
+    {
+        return GL.GetAttribLocation(Handle, attribName);
+    }
+
     public void Use()
     {
         GL.UseProgram(Handle);

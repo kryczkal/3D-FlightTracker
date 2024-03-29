@@ -9,12 +9,21 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 public class FlightTrackerApp : GameWindow
 {
     private float[] vertices =
-    {
-        -0.5f, -0.5f, 0.0f,
-        0.5f, -0.5f, 0.0f,
-        0.0f, 0.5f, 0.0f
+    { //    x,     y,     z,
+        -0.5f,  0.5f,  0.0f, // top left
+         0.5f,  0.5f,  0.0f, // top right
+        -0.5f, -0.5f,  0.0f, // bottom left
+         0.5f, -0.5f,  0.0f  // bottom right
     };
+
+    private uint[] indicies =
+    {
+        0, 1, 3,
+        3, 2, 0,
+    };
+
     int vertexBufferObject;
+    private int elementBufferObject;
     int vertexArrayObject;
 
     Shader shader;
@@ -39,13 +48,17 @@ public class FlightTrackerApp : GameWindow
 
         // Generate a vertex buffer object
         vertexBufferObject = GL.GenBuffer();
-        vertexArrayObject = GL.GenVertexArray();
-
-        GL.BindVertexArray(vertexArrayObject);
         GL.BindBuffer(BufferTarget.ArrayBuffer, vertexBufferObject);
         GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
-        GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+
+        vertexArrayObject = GL.GenVertexArray();
+        GL.BindVertexArray(vertexArrayObject);
+        GL.VertexAttribPointer(shader.GetAttribLocation("vec3Position"), 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
         GL.EnableVertexAttribArray(0);
+
+        elementBufferObject = GL.GenBuffer();
+        GL.BindBuffer(BufferTarget.ElementArrayBuffer, elementBufferObject);
+        GL.BufferData(BufferTarget.ElementArrayBuffer, indicies.Length * sizeof(uint), indicies, BufferUsageHint.StaticDraw);
     }
 
     protected override void OnRenderFrame(FrameEventArgs e)
@@ -59,7 +72,7 @@ public class FlightTrackerApp : GameWindow
         GL.UseProgram(0);
         shader.Use();
         GL.BindVertexArray(vertexArrayObject);
-        GL.DrawArrays(PrimitiveType.Triangles, 0 ,3);
+        GL.DrawElements(PrimitiveType.Triangles, indicies.Length, DrawElementsType.UnsignedInt, 0);
 
         // Swap the front and back buffers to present the new frame
         SwapBuffers();
