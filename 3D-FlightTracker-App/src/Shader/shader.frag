@@ -8,7 +8,7 @@ in vec2 TexCoord;
 
 uniform vec3 lightPos;
 uniform vec3 viewPos;
-uniform sampler2D texture1;
+uniform sampler2D texture0;
 
 void main()
 {
@@ -30,6 +30,6 @@ void main()
     vec3 specular = specularStrength * spec * vec3(1.0, 1.0, 1.0); // white light
 
     // Combine results
-    vec3 result = (ambient + diffuse + specular) * texture(texture1, TexCoord).rgb;
+    vec3 result = (ambient + diffuse + specular) * texture(texture0, TexCoord).rgb;
     FragColor = vec4(result, 1.0);
 }
