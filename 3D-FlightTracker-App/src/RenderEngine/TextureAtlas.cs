@@ -11,7 +11,7 @@ namespace _3D_FlightTracker_App.RenderEngine;
 
 public class TextureAtlas
 {
-    public readonly int TextureAtlasId;
+    public int TextureAtlasId;
     public readonly int AtlasWidth;
     public readonly int AtlasHeight;
 
@@ -19,6 +19,24 @@ public class TextureAtlas
     {
         AtlasWidth = width;
         AtlasHeight = height;
+
+        InitTexture();
+        GenBlackTexture();
+    }
+    public TextureAtlas(string imagePath)
+    {
+        using (Image<Rgba32> image = Image.Load<Rgba32>(imagePath))
+        {
+            AtlasWidth = image.Width;
+            AtlasHeight = image.Height;
+        } // TODO: This is not the best way to get the image dimensions, but it works for now
+
+        InitTexture();
+        LoadImageToTexture(imagePath, 0, 0);
+    }
+
+    private void InitTexture()
+    {
         TextureAtlasId = GL.GenTexture();
         GL.BindTexture(TextureTarget.Texture2D, TextureAtlasId);
 
@@ -30,18 +48,9 @@ public class TextureAtlas
 
         GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba,
             AtlasWidth, AtlasHeight, 0, PixelFormat.Rgba, PixelType.UnsignedByte, IntPtr.Zero);
-
-        InitBlackTexture();
     }
 
-    public void UpdateTextureRegion(byte[] imageData, int xOffset, int yOffset, int regionWidth, int regionHeight)
-    {
-        GL.BindTexture(TextureTarget.Texture2D, TextureAtlasId);
-        GL.TexSubImage2D(TextureTarget.Texture2D, 0, xOffset, yOffset, regionWidth, regionHeight, PixelFormat.Rgba,
-            PixelType.UnsignedByte, imageData);
-    }
-
-    private void InitBlackTexture()
+    private void GenBlackTexture()
     {
         byte[] blackTexture = new byte[AtlasWidth * AtlasHeight * 4];
         for (int i = 0; i < blackTexture.Length; i++)
@@ -52,18 +61,11 @@ public class TextureAtlas
         UpdateTextureRegion(blackTexture, 0, 0, AtlasWidth, AtlasHeight);
     }
 
-    public void MakePartialTextureColored(int xOffset, int yOffset, int regionWidth, int regionHeight, Vector4 color)
+    public void UpdateTextureRegion(byte[] imageData, int xOffset, int yOffset, int regionWidth, int regionHeight)
     {
-        byte[] coloredTexture = new byte[regionWidth * regionHeight * 4];
-        for (int i = 0; i < coloredTexture.Length; i += 4)
-        {
-            coloredTexture[i] = (byte)(color.X * 255);
-            coloredTexture[i + 1] = (byte)(color.Y * 255);
-            coloredTexture[i + 2] = (byte)(color.Z * 255);
-            coloredTexture[i + 3] = (byte)(color.W * 255);
-        }
-
-        UpdateTextureRegion(coloredTexture, xOffset, yOffset, regionWidth, regionHeight);
+        GL.BindTexture(TextureTarget.Texture2D, TextureAtlasId);
+        GL.TexSubImage2D(TextureTarget.Texture2D, 0, xOffset, yOffset, regionWidth, regionHeight, PixelFormat.Rgba,
+            PixelType.UnsignedByte, imageData);
     }
 
     public void LoadImageToTexture(string filePath, int xOffset, int yOffset)
