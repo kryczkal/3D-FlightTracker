@@ -1,58 +1,31 @@
-using OpenTK.Graphics.OpenGL4;
-using System.Collections.Generic;
-using _3D_FlightTracker_App.Sphere;
-using OpenTK.Mathematics;
+using _3D_FlightTracker_App.RenderEngine;
+using BruTile;
+using BruTile.Predefined;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using Image = SixLabors.ImageSharp.Image;
 
 namespace _3D_FlightTracker_App;
 
 public class Earth : IDrawable
 {
+    /*
+     * Private fields
+     */
     private SphereMesh _sphereMesh;
-    public Earth(uint sectorCount, uint stackCount, float radius, Texture texture)
+    private TextureAtlas _mapTiles;
+
+    /*
+     * Public methods
+     */
+    public Earth(uint sectorCount, uint stackCount, float radius, int textureWidth = 1024)
     {
-        _sphereMesh = new SphereMesh(sectorCount, stackCount, radius, []);
-        _sphereMesh.Textures = [texture];
-        //CreatePlaceholderTexture(_sphereMesh);
+        _mapTiles = new TextureAtlas(textureWidth, textureWidth);
+        InitMapTiles(ref _mapTiles);
+        _sphereMesh = new SphereMesh(sectorCount, stackCount, radius, [new(_mapTiles.TextureAtlasId)]);
     }
 
-    public void CreatePlaceholderTexture(Mesh mesh)
-    {
-        int width = 2, height = 2;
-        byte[] pixels = new byte[width * height * 3]; // RGB format
-
-        //// Simple checkerboard pattern
-        for (int y = 0; y < height; y++)
-        {
-            for (int x = 0; x < width; x++)
-            {
-                int offset = (y * width + x) * 3;
-                bool isWhite = (x % 2 == y % 2); // Checkerboard pattern
-                pixels[offset] = isWhite ? (byte)255 : (byte)0; // Red
-                pixels[offset + 1] = isWhite ? (byte)255 : (byte)0; // Green
-                pixels[offset + 2] = isWhite ? (byte)255 : (byte)0; // Blue
-            }
-        }
-
-        // Generate and bind the texture
-        int genTexture = GL.GenTexture();
-        GL.BindTexture(TextureTarget.Texture2D, genTexture);
-
-        // Set texture parameters
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
-
-        // Upload the texture data
-        GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgb, width, height, 0, PixelFormat.Rgb, PixelType.UnsignedByte, pixels);
-
-        // Unbind the texture
-        GL.BindTexture(TextureTarget.Texture2D, 0);
-
-        mesh.Textures = [new(genTexture)];
-    }
-
-    public void Draw(Shader shader)
+    public void Draw(Shader.Shader shader)
     {
         _sphereMesh.Draw(shader);
     }
@@ -60,5 +33,64 @@ public class Earth : IDrawable
     public void Dispose()
     {
         _sphereMesh.Dispose();
+    }
+
+    /*
+     * Static methods
+     */
+
+    /// <summary>
+    /// This method initializes the textureAtlas with map tiles by downloading them from the internet using BruTile
+    /// </summary>
+    /// <param name="textureAtlas">The textureAtlas to which the tiles will be stored. It's width and height should be the same and a multiplication of 2</param>
+    public static void InitMapTiles(ref TextureAtlas textureAtlas)
+    {
+        var tileSource = KnownTileSources.Create();
+
+        // the extent of the visible map changes but lets start with the whole world
+        var extent = new Extent(-20037508, -20037508, 20037508, 20037508);
+        var screenWidthInPixels = textureAtlas.AtlasWidth; // The width of the map on screen in pixels
+        var resolution = extent.Width / screenWidthInPixels;
+        var tileInfos = tileSource.Schema.GetTileInfos(extent, resolution);
+
+        // TODO: Use parallel for loop
+        foreach (var tileInfo in tileInfos)
+        {
+            // Get the tile data synchronously (as this is an initialization method and we can't begin with an empty texture atlas)
+            byte[] tile = Task.Run(async Task<byte[]> () => { return await tileSource.GetTileAsync(tileInfo); }).GetAwaiter().GetResult();
+            Task.WaitAll();
+
+            // Load the image with ImageSharp
+            // This part has to be done since the tiles are in PNG format
+            // and we need to convert them to a format that OpenGL can understand
+            using (Image<Rgba32> image = Image.Load<Rgba32>(tile))
+            {
+                int width = image.Width;
+                int height = image.Height;
+
+                // Prepare the pixel array
+                byte[] pixelData = new byte[width * height * 4];
+
+                // Copy the pixel data to the array, pixel by pixel
+                image.ProcessPixelRows(accessor =>
+                {
+                    for (int y = 0; y < height; y++)
+                    {
+                        Span<Rgba32> pixelRow = accessor.GetRowSpan(y);
+                        for (int x = 0; x < width; x++)
+                        {
+                            int index = (y * width + x) * 4;
+                            pixelData[index] = pixelRow[x].R;
+                            pixelData[index + 1] = pixelRow[x].G;
+                            pixelData[index + 2] = pixelRow[x].B;
+                            pixelData[index + 3] = pixelRow[x].A;
+                        }
+                    }
+                });
+
+                textureAtlas.UpdateTextureRegion(pixelData, width * tileInfo.Index.Col, height * tileInfo.Index.Row,
+                    width, height);
+            }
+        }
     }
 }
