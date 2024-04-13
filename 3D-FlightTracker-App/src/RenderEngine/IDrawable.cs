@@ -2,5 +2,5 @@ namespace _3D_FlightTracker_App;
 
 public interface IDrawable
 {
-    void Draw(Shader shader);
+    void Draw(Shader.Shader shader);
 }

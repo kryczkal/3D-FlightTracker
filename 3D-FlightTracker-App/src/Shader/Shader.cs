@@ -1,16 +1,12 @@
-
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
-using OpenTK.Windowing.Common;
-using OpenTK.Windowing.Desktop;
-using OpenTK.Windowing.GraphicsLibraryFramework;
 
-namespace _3D_FlightTracker_App;
+namespace _3D_FlightTracker_App.Shader;
 
 public class Shader : IDisposable
 {
-    private int Handle;
-    private bool IsDisposed = false;
+    private readonly int _handle;
+    private bool _isDisposed = false;
 
     public Shader(string vertexPath, string fragmentPath)
     {
@@ -18,62 +14,59 @@ public class Shader : IDisposable
          * Compile the vertex and fragment shaders
          */
 
-        int VertexShader;
-        int FragmentShader;
-
         // Load the source code of the shaders
-        string VertexShaderSource = File.ReadAllText(vertexPath);
-        string FragmentShaderSource = File.ReadAllText(fragmentPath);
+        string vertexShaderSource = File.ReadAllText(vertexPath);
+        string fragmentShaderSource = File.ReadAllText(fragmentPath);
 
-        VertexShader = GL.CreateShader(ShaderType.VertexShader);
-        GL.ShaderSource(VertexShader, VertexShaderSource);
+        var vertexShader = GL.CreateShader(ShaderType.VertexShader);
+        GL.ShaderSource(vertexShader, vertexShaderSource);
 
-        FragmentShader = GL.CreateShader(ShaderType.FragmentShader);
-        GL.ShaderSource(FragmentShader, FragmentShaderSource);
+        var fragmentShader = GL.CreateShader(ShaderType.FragmentShader);
+        GL.ShaderSource(fragmentShader, fragmentShaderSource);
 
         // Compile the shaders
-        GL.CompileShader(VertexShader);
+        GL.CompileShader(vertexShader);
 
-        GL.GetShader(VertexShader, ShaderParameter.CompileStatus, out int statusCode);
+        GL.GetShader(vertexShader, ShaderParameter.CompileStatus, out int statusCode);
         if (statusCode == 0)
         {
-            throw new Exception(GL.GetShaderInfoLog(VertexShader));
+            throw new Exception(GL.GetShaderInfoLog(vertexShader));
         }
 
-        GL.CompileShader(FragmentShader);
+        GL.CompileShader(fragmentShader);
 
-        GL.GetShader(FragmentShader, ShaderParameter.CompileStatus, out statusCode);
+        GL.GetShader(fragmentShader, ShaderParameter.CompileStatus, out statusCode);
         if (statusCode == 0)
         {
-            throw new Exception(GL.GetShaderInfoLog(FragmentShader));
+            throw new Exception(GL.GetShaderInfoLog(fragmentShader));
         }
 
         // Create the shader program
-        Handle = GL.CreateProgram();
+        _handle = GL.CreateProgram();
 
         // Attach the shaders to the program
-        GL.AttachShader(Handle, VertexShader);
-        GL.AttachShader(Handle, FragmentShader);
+        GL.AttachShader(_handle, vertexShader);
+        GL.AttachShader(_handle, fragmentShader);
 
         // Link the program
-        GL.LinkProgram(Handle);
+        GL.LinkProgram(_handle);
 
-        GL.GetProgram(Handle, GetProgramParameterName.LinkStatus, out statusCode);
+        GL.GetProgram(_handle, GetProgramParameterName.LinkStatus, out statusCode);
         if (statusCode == 0)
         {
-            throw new Exception(GL.GetProgramInfoLog(Handle));
+            throw new Exception(GL.GetProgramInfoLog(_handle));
         }
 
         // Clean up the shaders
-        GL.DetachShader(Handle, VertexShader);
-        GL.DetachShader(Handle, FragmentShader);
-        GL.DeleteShader(VertexShader);
-        GL.DeleteShader(FragmentShader);
+        GL.DetachShader(_handle, vertexShader);
+        GL.DetachShader(_handle, fragmentShader);
+        GL.DeleteShader(vertexShader);
+        GL.DeleteShader(fragmentShader);
     }
 
     public void SetMatrix4(string uniformName, ref Matrix4 matrix)
     {
-        int location = GL.GetUniformLocation(Handle, uniformName);
+        int location = GL.GetUniformLocation(_handle, uniformName);
         if (location == -1)
             throw new Exception($"Could not find uniform {uniformName} in shader.");
 
@@ -82,7 +75,7 @@ public class Shader : IDisposable
 
     public void SetVector3(string uniformName, ref Vector3 vector)
     {
-        int location = GL.GetUniformLocation(Handle, uniformName);
+        int location = GL.GetUniformLocation(_handle, uniformName);
         if (location == -1)
             throw new Exception($"Could not find uniform {uniformName} in shader.");
 
@@ -90,33 +83,33 @@ public class Shader : IDisposable
     }
     public void SetInt(string name, int value)
     {
-        int location = GL.GetUniformLocation(Handle, name);
+        int location = GL.GetUniformLocation(_handle, name);
         if (location != -1)
             GL.Uniform1(location, value);
     }
 
     public int GetAttribLocation(string attribName)
     {
-        return GL.GetAttribLocation(Handle, attribName);
+        return GL.GetAttribLocation(_handle, attribName);
     }
 
     public void Use()
     {
-        GL.UseProgram(Handle);
+        GL.UseProgram(_handle);
     }
 
     protected virtual void Dispose(bool disposing)
     {
-        if (!IsDisposed)
+        if (!_isDisposed)
         {
-            GL.DeleteProgram(Handle);
-            IsDisposed = true;
+            GL.DeleteProgram(_handle);
+            _isDisposed = true;
         }
     }
 
     ~Shader()
     {
-        if (!IsDisposed)
+        if (!_isDisposed)
         {
             throw new Exception("Shader was not disposed properly.");
         }

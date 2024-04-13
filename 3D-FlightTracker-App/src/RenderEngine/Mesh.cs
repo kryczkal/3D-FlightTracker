@@ -1,10 +1,10 @@
 using OpenTK.Graphics.OpenGL4;
 
-namespace _3D_FlightTracker_App;
+namespace _3D_FlightTracker_App.RenderEngine;
 
 public class Texture
 {
-    public int Id { get; private set; }
+    public int Id { get; }
 
     public Texture(int id)
     {
@@ -91,7 +91,7 @@ public class Mesh : IDrawable
         GL.BindVertexArray(0);
     }
 
-    public void Draw(Shader shader)
+    public void Draw(Shader.Shader shader)
     {
         // Inspired by: https://learnopengl.com/Model-Loading/Mesh
 
