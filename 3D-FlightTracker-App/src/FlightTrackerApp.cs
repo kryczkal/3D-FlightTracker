@@ -1,3 +1,4 @@
+using _3D_FlightTracker_App.RenderEngine;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -9,6 +10,7 @@ namespace _3D_FlightTracker_App;
 public class FlightTrackerApp : GameWindow
 {
     Shader.Shader _shader = null!;
+    SphereMesh _background = null!;
     Earth _earth = null!;
 
     private int _width, _height;
@@ -75,6 +77,13 @@ public class FlightTrackerApp : GameWindow
             Settings.Earth.EarthRadius,
             Settings.Earth.InitialResolution
             );
+
+        /*
+         * Background
+         */
+        TextureAtlas textureAtlas = new TextureAtlas(Settings.Background.BackgroundImagePath);
+        _background = new SphereMesh(100, 100, Settings.Background.BackgroundRadius, [new Texture(textureAtlas.TextureAtlasId)]);
+
         /*
          * Clear color
          */
@@ -90,7 +99,6 @@ public class FlightTrackerApp : GameWindow
         // Clean the screen with the color set in OnLoad
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
         
-        //GL.UseProgram(0);
         _shader.Use();
 
         // Set the transformation matrices
@@ -98,8 +106,11 @@ public class FlightTrackerApp : GameWindow
         _shader.SetMatrix4("view", ref _view);
         _shader.SetMatrix4("model", ref _model);
 
+        // TODO: Experiment with different lighting settings (lower the ambient light, increase the specular light)
+
         // Draw the Earth
         _earth.Draw(_shader);
+        _background.Draw(_shader);
 
         // Swap the front and back buffers to present the new frame
         SwapBuffers();
@@ -164,7 +175,7 @@ public class FlightTrackerApp : GameWindow
         // Zoom by scrolling
         if (MouseState.ScrollDelta.Y != 0)
         {
-            _view *= Matrix4.CreateTranslation(0, 0, MouseState.ScrollDelta.Y * Settings.Camera.ScrollZoomSpeed);
+            UpdateZoom(MouseState.ScrollDelta.Y);
         }
 
         if (KeyboardState.IsKeyDown(Keys.Escape))
@@ -172,6 +183,32 @@ public class FlightTrackerApp : GameWindow
             Close();
         }
     }
+    
+    // Variables to hold the current zoom level
+    private float _currentZoomLevel = Settings.Camera.InitialZoomLevel;
+
+    /// Method to update the zoom based on scroll input
+    private void UpdateZoom(float scrollDelta)
+    {
+        // Constants for the sigmoid function
+        float k = 1.1f; // steepness of the bell curve
+        float zoomMidpoint = 3f;
+
+        // Calculate the sigmoid factor to adjust the zoom speed
+        float expFactor = MathF.Exp(-k * MathF.Pow(_currentZoomLevel - zoomMidpoint, 2));
+
+        // Calculate the new zoom level
+        float zoomChange = scrollDelta * Settings.Camera.ScrollZoomSpeed * expFactor;
+        _currentZoomLevel += zoomChange;
+
+        // Clamp the zoom level between the min and max distances
+        _currentZoomLevel = Math.Clamp(_currentZoomLevel, Settings.Camera.CameraMinDistance, Settings.Camera.CameraMaxDistance);
+
+        // Apply the zoom transformation
+        _view = Matrix4.LookAt(new Vector3(0,0,_currentZoomLevel), Vector3.Zero, Vector3.UnitY);
+    }
+
+
 
     protected override void OnFramebufferResize(FramebufferResizeEventArgs e)
     {
