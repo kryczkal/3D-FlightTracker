@@ -9,10 +9,15 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class FlightTrackerApp : GameWindow
 {
-    Shader shader;
-    Earth earth;
+    Shader _shader;
+    Earth _earth;
 
     private int _width, _height;
+
+    // Transformation matrices
+    private Matrix4 _projection;
+    private Matrix4 _view;
+    private Matrix4 _model;
 
     public FlightTrackerApp(int width, int height) : base(GameWindowSettings.Default,
         new NativeWindowSettings()
@@ -32,16 +37,23 @@ public class FlightTrackerApp : GameWindow
         base.OnLoad();
 
         // Load the shaders
-        shader = new Shader("shader.vert", "shader.frag");
+        _shader = new Shader(Settings.VertexShaderPath, Settings.FragmentShaderPath);
 
         // Enable depth testing
         GL.Enable(EnableCap.DepthTest);
         // Enable multisampling
         GL.Enable(EnableCap.Multisample);
+        //
         GL.DepthFunc(DepthFunction.Lequal);
 
+        // Initialize the transformation matrices
+        _projection = Matrix4.CreatePerspectiveFieldOfView(
+            float.DegreesToRadians(Settings.FOV), _width / (float)_height, Settings.NearPlane, Settings.FarPlane);
+        _view = Matrix4.LookAt(Settings.CameraPosition, Vector3.Zero, Vector3.UnitY);
+        _model = Matrix4.Identity;
+
         // Initialize the Earth
-        earth = new Earth(72, 72, 1.0f);
+        _earth = new Earth(Settings.EarthSectorCount, Settings.EarthStackCount, Settings.EarthRadius);
 
         // Set the clean buffer color
         GL.ClearColor(1.0f, 1.0f, 0.5f, 1.0f);
@@ -51,32 +63,26 @@ public class FlightTrackerApp : GameWindow
     {
         base.OnRenderFrame(e);
 
-
         // Clean the screen with the color set in OnLoad
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
         
         //GL.UseProgram(0);
-        shader.Use();
+        _shader.Use();
 
         // Set up transformations
-        Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.PiOver4, _width / (float)_height, 0.1f, 100.0f);
-        Matrix4 view = Matrix4.LookAt(new Vector3(0, 0, 3), Vector3.Zero, Vector3.UnitY);
-        Matrix4 model = Matrix4.CreateRotationY((float)Environment.TickCount / 1000.0f);
-        //Matrix4 model = Matrix4.Identity;
-        
-        shader.SetMatrix4("projection", ref projection);
-        shader.SetMatrix4("view", ref view);
-        shader.SetMatrix4("model", ref model);
+
+        _shader.SetMatrix4("projection", ref _projection);
+        _shader.SetMatrix4("view", ref _view);
+        _shader.SetMatrix4("model", ref _model);
 
         // Set light and view positions
         Vector3 lightPosition = new Vector3(1.2f, 1.0f, 2.0f);
         Vector3 viewPosition = new Vector3(0, 0, 3); // same as camera position
-        shader.SetVector3("lightPos", ref lightPosition);
-        shader.SetVector3("viewPos", ref viewPosition);
-        shader.SetInt("texture1", 0);
+        _shader.SetVector3("lightPos", ref lightPosition);
+        _shader.SetVector3("viewPos", ref viewPosition);
 
         // Draw the Earth
-        earth.Draw();
+        _earth.Draw(_shader);
 
         // Swap the front and back buffers to present the new frame
         SwapBuffers();
@@ -85,6 +91,31 @@ public class FlightTrackerApp : GameWindow
     protected override void OnUpdateFrame(FrameEventArgs args)
     {
         base.OnUpdateFrame(args);
+
+        if (KeyboardState.IsKeyDown(Keys.W))
+        {
+            _model *= Matrix4.CreateRotationX(Settings.RotationSpeed);
+        }
+        if (KeyboardState.IsKeyDown(Keys.S))
+        {
+            _model *= Matrix4.CreateRotationX(-Settings.RotationSpeed);
+        }
+        if (KeyboardState.IsKeyDown(Keys.A))
+        {
+            _model *= Matrix4.CreateRotationY(Settings.RotationSpeed);
+        }
+        if (KeyboardState.IsKeyDown(Keys.D))
+        {
+            _model *= Matrix4.CreateRotationY(-Settings.RotationSpeed);
+        }
+        if (KeyboardState.IsKeyDown(Keys.Q))
+        {
+            _model *= Matrix4.CreateRotationZ(Settings.RotationSpeed);
+        }
+        if (KeyboardState.IsKeyDown(Keys.E))
+        {
+            _model *= Matrix4.CreateRotationZ(-Settings.RotationSpeed);
+        }
 
         if (KeyboardState.IsKeyDown(Keys.Escape))
         {
@@ -105,7 +136,7 @@ public class FlightTrackerApp : GameWindow
     protected override void OnUnload()
     {
         base.OnUnload();
-        earth.Dispose();
-        shader.Dispose();
+        _earth.Dispose();
+        _shader.Dispose();
     }
 }
