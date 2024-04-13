@@ -9,7 +9,7 @@ public class SphereMesh :  Mesh
     }
     private void InitializeGeometry(uint sectorCount, uint stackCount, float radius)
     {
-        // Sphere generation algorithm from Song Ho Ahn:
+        // Sphere generation algorithm by Song Ho Ahn:
         // https://www.songho.ca/opengl/gl_sphere.html
 
         float x, y, z, xy;                           // vertex position

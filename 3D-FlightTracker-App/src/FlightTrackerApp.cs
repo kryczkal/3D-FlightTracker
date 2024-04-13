@@ -1,3 +1,4 @@
+using _3D_FlightTracker_App.Debug;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Graphics;
 using OpenTK.Mathematics;
@@ -11,6 +12,7 @@ public class FlightTrackerApp : GameWindow
 {
     Shader _shader;
     Earth _earth;
+    Debug2DMap _debug2DMap; // TODO: Remove this line
 
     private int _width, _height;
 
@@ -18,9 +20,6 @@ public class FlightTrackerApp : GameWindow
     private Matrix4 _projection;
     private Matrix4 _view;
     private Matrix4 _model;
-
-    private Vector3 _lightPosition;
-    private Vector3 _viewPosition;
 
     public FlightTrackerApp(int width, int height) : base(GameWindowSettings.Default,
         new NativeWindowSettings()
@@ -66,26 +65,19 @@ public class FlightTrackerApp : GameWindow
         _view = Matrix4.LookAt(Settings.CameraPosition, Vector3.Zero, Vector3.UnitY);
         _model = Matrix4.Identity;
 
-        // Set up transformations
-
-        // Set light and view positions
-        _lightPosition = Settings.LightPosition;
-        _viewPosition = Settings.CameraPosition; // same as camera position
-
-
         /*
          * Earth
          */
 
         // Initialize the Earth
-        _earth = new Earth(Settings.EarthSectorCount, Settings.EarthStackCount, Settings.EarthRadius);
-
+        _debug2DMap = new Debug2DMap(); // TODO: Remove this line
+        _earth = new Earth(Settings.EarthSectorCount, Settings.EarthStackCount, Settings.EarthRadius, new Texture(_debug2DMap._textureAtlas.textureAtlasID));
         /*
          * Clear color
          */
 
         // Set the clean buffer color
-        GL.ClearColor(1.0f, 1.0f, 0.5f, 1.0f);
+        GL.ClearColor(Settings.BackgroundColor);
     }
 
     protected override void OnRenderFrame(FrameEventArgs e)
@@ -103,12 +95,9 @@ public class FlightTrackerApp : GameWindow
         _shader.SetMatrix4("view", ref _view);
         _shader.SetMatrix4("model", ref _model);
 
-        // Set the light and view positions
-        _shader.SetVector3("lightPos", ref _lightPosition);
-        _shader.SetVector3("viewPos", ref _viewPosition);
-
         // Draw the Earth
         _earth.Draw(_shader);
+        _debug2DMap.Draw(_shader); // TODO: Remove this line
 
         // Swap the front and back buffers to present the new frame
         SwapBuffers();
@@ -118,30 +107,73 @@ public class FlightTrackerApp : GameWindow
     {
         base.OnUpdateFrame(args);
 
+        /*
+         * Keyboard input
+         */
         if (KeyboardState.IsKeyDown(Keys.W))
         {
-            _model *= Matrix4.CreateRotationX(Settings.RotationSpeed);
+            _model *= Matrix4.CreateRotationX(Settings.KeyboardRotationSpeed);
         }
         if (KeyboardState.IsKeyDown(Keys.S))
         {
-            _model *= Matrix4.CreateRotationX(-Settings.RotationSpeed);
+            _model *= Matrix4.CreateRotationX(-Settings.KeyboardRotationSpeed);
         }
         if (KeyboardState.IsKeyDown(Keys.A))
         {
-            _model *= Matrix4.CreateRotationY(Settings.RotationSpeed);
+            _model *= Matrix4.CreateRotationY(Settings.KeyboardRotationSpeed);
         }
         if (KeyboardState.IsKeyDown(Keys.D))
         {
-            _model *= Matrix4.CreateRotationY(-Settings.RotationSpeed);
+            _model *= Matrix4.CreateRotationY(-Settings.KeyboardRotationSpeed);
         }
         if (KeyboardState.IsKeyDown(Keys.Q))
         {
-            _model *= Matrix4.CreateRotationZ(Settings.RotationSpeed);
+            _model *= Matrix4.CreateRotationZ(Settings.KeyboardRotationSpeed);
         }
         if (KeyboardState.IsKeyDown(Keys.E))
         {
-            _model *= Matrix4.CreateRotationZ(-Settings.RotationSpeed);
+            _model *= Matrix4.CreateRotationZ(-Settings.KeyboardRotationSpeed);
         }
+
+        if (KeyboardState.IsKeyDown(Keys.Up))
+        {
+            _view *= Matrix4.CreateTranslation(0, 0, Settings.KeyboardZoomSpeed);
+        }
+        if (KeyboardState.IsKeyDown(Keys.Down))
+        {
+            _view *= Matrix4.CreateTranslation(0, 0, -Settings.KeyboardZoomSpeed);
+        }
+
+        /*
+         * Mouse input
+         */
+
+        // Rotate by dragging
+        if (MouseState.IsButtonDown(MouseButton.Left))
+        {
+            Vector2 delta = MouseState.Position - MouseState.PreviousPosition;
+            _model *= Matrix4.CreateRotationY(delta.X * Settings.MouseRotationSpeed);
+            _model *= Matrix4.CreateRotationX(delta.Y * Settings.MouseRotationSpeed);
+        }
+
+        // Zoom by scrolling
+        if (MouseState.ScrollDelta.Y != 0)
+        {
+            _view *= Matrix4.CreateTranslation(0, 0, MouseState.ScrollDelta.Y * Settings.ScrollZoomSpeed);
+        }
+
+        // Update the debug 2D map
+        if (KeyboardState.IsKeyPressed(Keys.Space))
+        {
+            Random Random = new Random();
+            // Generate a random color
+            Vector4 color = new Vector4((float)Random.NextDouble(), (float)Random.NextDouble(), (float)Random.NextDouble(), 1.0f);
+            // Get a random region
+            int xOffset = Random.Next(0, _debug2DMap._textureAtlas.atlasWidth - 100);
+            int yOffset = Random.Next(0, _debug2DMap._textureAtlas.atlasHeight - 100);
+           _debug2DMap._textureAtlas.MakePartialTextureColored(xOffset, yOffset, 100, 100, color);
+        }
+
 
         if (KeyboardState.IsKeyDown(Keys.Escape))
         {
@@ -156,7 +188,6 @@ public class FlightTrackerApp : GameWindow
         _width = e.Width;
         _height = e.Height;
         GL.Viewport(0, 0, e.Width, e.Height);
-
     }
 
     protected override void OnUnload()

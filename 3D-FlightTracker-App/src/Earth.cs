@@ -8,10 +8,11 @@ namespace _3D_FlightTracker_App;
 public class Earth : IDrawable
 {
     private SphereMesh _sphereMesh;
-    public Earth(uint sectorCount, uint stackCount, float radius)
+    public Earth(uint sectorCount, uint stackCount, float radius, Texture texture)
     {
         _sphereMesh = new SphereMesh(sectorCount, stackCount, radius, []);
-        CreatePlaceholderTexture(_sphereMesh);
+        _sphereMesh.Textures = [texture];
+        //CreatePlaceholderTexture(_sphereMesh);
     }
 
     public void CreatePlaceholderTexture(Mesh mesh)
