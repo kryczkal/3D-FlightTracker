@@ -1,16 +1,18 @@
-namespace _3D_FlightTracker_App.Sphere;
+namespace _3D_FlightTracker_App.RenderEngine;
 
 public class SphereMesh :  Mesh
 {
-    public SphereMesh(uint sectorCount, uint stackCount, float radius, Texture[] textures) : base()
+    public SphereMesh(uint sectorCount, uint stackCount, float radius, Texture[] textures)
     {
         InitializeGeometry(sectorCount, stackCount, radius);
+        Textures = textures;
         SetupMesh();
     }
     private void InitializeGeometry(uint sectorCount, uint stackCount, float radius)
     {
         // Sphere generation algorithm by Song Ho Ahn:
         // https://www.songho.ca/opengl/gl_sphere.html
+        // Updated to use Web Mercator projection for texture coordinates instead of UV mapping
 
         float x, y, z, xy;                           // vertex position
         float nx, ny, nz, lengthInv = 1.0f / radius; // vertex normal
@@ -51,9 +53,10 @@ public class SphereMesh :  Mesh
                 normals.Add(ny);
                 normals.Add(nz);
 
-                // vertex tex coord (s, t) range between [0, 1]
+                // vertex tex coord (s, t) using Web Mercator projection
                 s = (float)j / sectorCount;
-                t = (float)i / stackCount;
+                double lat = Math.Asin(z / radius); // latitude in radians
+                t = (float)(0.5 - 0.5 * Math.Log((1 + Math.Sin(lat)) / (1 - Math.Sin(lat))) / (2 * Math.PI));
                 texCoords.Add(s);
                 texCoords.Add(t);
             }
