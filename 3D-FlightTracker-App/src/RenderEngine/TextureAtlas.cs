@@ -3,31 +3,24 @@ using OpenTK.Mathematics;
 
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
-using System;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.Runtime.InteropServices;
-using BruTile;
-using BruTile.Predefined;
-using BruTile.Tms;
-using BruTile.Web;
+
 using Image = SixLabors.ImageSharp.Image;
 using PixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
-using Web = System.Net.Http;
-using Rectangle = SixLabors.ImageSharp.Rectangle;
 
 namespace _3D_FlightTracker_App.RenderEngine;
 
 public class TextureAtlas
 {
-    public int textureAtlasID;
-    public int atlasWidth = 2048; // Temporary size
-    public int atlasHeight = 2048; // Temporary size
+    public readonly int TextureAtlasId;
+    public readonly int AtlasWidth;
+    public readonly int AtlasHeight;
 
-    public TextureAtlas()
+    public TextureAtlas(int width = 2048, int height = 2048)
     {
-        textureAtlasID = GL.GenTexture();
-        GL.BindTexture(TextureTarget.Texture2D, textureAtlasID);
+        AtlasWidth = width;
+        AtlasHeight = height;
+        TextureAtlasId = GL.GenTexture();
+        GL.BindTexture(TextureTarget.Texture2D, TextureAtlasId);
 
         GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
         GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
@@ -36,28 +29,27 @@ public class TextureAtlas
         GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
 
         GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba,
-            atlasWidth, atlasHeight, 0, PixelFormat.Rgba, PixelType.UnsignedByte, IntPtr.Zero);
+            AtlasWidth, AtlasHeight, 0, PixelFormat.Rgba, PixelType.UnsignedByte, IntPtr.Zero);
 
         InitBlackTexture();
-        //LoadImageToTexture("src/Debug/debug_image.jpg", 0, 0);
     }
 
     public void UpdateTextureRegion(byte[] imageData, int xOffset, int yOffset, int regionWidth, int regionHeight)
     {
-        GL.BindTexture(TextureTarget.Texture2D, textureAtlasID);
+        GL.BindTexture(TextureTarget.Texture2D, TextureAtlasId);
         GL.TexSubImage2D(TextureTarget.Texture2D, 0, xOffset, yOffset, regionWidth, regionHeight, PixelFormat.Rgba,
             PixelType.UnsignedByte, imageData);
     }
 
     private void InitBlackTexture()
     {
-        byte[] blackTexture = new byte[atlasWidth * atlasHeight * 4];
+        byte[] blackTexture = new byte[AtlasWidth * AtlasHeight * 4];
         for (int i = 0; i < blackTexture.Length; i++)
         {
             blackTexture[i] = 0;
         }
 
-        UpdateTextureRegion(blackTexture, 0, 0, atlasWidth, atlasHeight);
+        UpdateTextureRegion(blackTexture, 0, 0, AtlasWidth, AtlasHeight);
     }
 
     public void MakePartialTextureColored(int xOffset, int yOffset, int regionWidth, int regionHeight, Vector4 color)
