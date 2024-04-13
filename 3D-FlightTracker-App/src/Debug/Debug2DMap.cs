@@ -51,6 +51,6 @@ public class Debug2DMap : IDrawable
 
     public void Draw(Shader.Shader shader)
     {
-        throw new NotImplementedException();
+        Mesh.Draw(shader);
     }
 }
