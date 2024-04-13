@@ -28,4 +28,9 @@ public static class Settings
     public static string VertexShaderPath = "src/Shader/shader.vert";
     public static string FragmentShaderPath = "src/Shader/shader.frag";
 
+    /*
+     * Light settings
+     */
+    public static Vector3 LightPosition = new Vector3(1.2f, 1.0f, 2.0f);
+
 }

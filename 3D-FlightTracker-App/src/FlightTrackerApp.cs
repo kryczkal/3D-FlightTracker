@@ -19,6 +19,9 @@ public class FlightTrackerApp : GameWindow
     private Matrix4 _view;
     private Matrix4 _model;
 
+    private Vector3 _lightPosition;
+    private Vector3 _viewPosition;
+
     public FlightTrackerApp(int width, int height) : base(GameWindowSettings.Default,
         new NativeWindowSettings()
         {
@@ -36,9 +39,16 @@ public class FlightTrackerApp : GameWindow
     {
         base.OnLoad();
 
+        /*
+         * Shaders
+         */
+
         // Load the shaders
         _shader = new Shader(Settings.VertexShaderPath, Settings.FragmentShaderPath);
 
+        /*
+         * OpenGL settings
+         */
         // Enable depth testing
         GL.Enable(EnableCap.DepthTest);
         // Enable multisampling
@@ -46,14 +56,33 @@ public class FlightTrackerApp : GameWindow
         //
         GL.DepthFunc(DepthFunction.Lequal);
 
+        /*
+         * Transformation matrices
+         */
+
         // Initialize the transformation matrices
         _projection = Matrix4.CreatePerspectiveFieldOfView(
             float.DegreesToRadians(Settings.FOV), _width / (float)_height, Settings.NearPlane, Settings.FarPlane);
         _view = Matrix4.LookAt(Settings.CameraPosition, Vector3.Zero, Vector3.UnitY);
         _model = Matrix4.Identity;
 
+        // Set up transformations
+
+        // Set light and view positions
+        _lightPosition = Settings.LightPosition;
+        _viewPosition = Settings.CameraPosition; // same as camera position
+
+
+        /*
+         * Earth
+         */
+
         // Initialize the Earth
         _earth = new Earth(Settings.EarthSectorCount, Settings.EarthStackCount, Settings.EarthRadius);
+
+        /*
+         * Clear color
+         */
 
         // Set the clean buffer color
         GL.ClearColor(1.0f, 1.0f, 0.5f, 1.0f);
@@ -69,17 +98,14 @@ public class FlightTrackerApp : GameWindow
         //GL.UseProgram(0);
         _shader.Use();
 
-        // Set up transformations
-
+        // Set the transformation matrices
         _shader.SetMatrix4("projection", ref _projection);
         _shader.SetMatrix4("view", ref _view);
         _shader.SetMatrix4("model", ref _model);
 
-        // Set light and view positions
-        Vector3 lightPosition = new Vector3(1.2f, 1.0f, 2.0f);
-        Vector3 viewPosition = new Vector3(0, 0, 3); // same as camera position
-        _shader.SetVector3("lightPos", ref lightPosition);
-        _shader.SetVector3("viewPos", ref viewPosition);
+        // Set the light and view positions
+        _shader.SetVector3("lightPos", ref _lightPosition);
+        _shader.SetVector3("viewPos", ref _viewPosition);
 
         // Draw the Earth
         _earth.Draw(_shader);
