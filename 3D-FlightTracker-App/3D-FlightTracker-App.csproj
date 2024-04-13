@@ -22,9 +22,6 @@
       <None Update="src\Shader\shader.vert">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
-      <None Update="src\Debug\debug_image.jpg">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
     </ItemGroup>
 
 </Project>
