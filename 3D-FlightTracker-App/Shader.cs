@@ -1,5 +1,6 @@
 
 using OpenTK.Graphics.OpenGL;
+using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
@@ -68,6 +69,30 @@ public class Shader : IDisposable
         GL.DetachShader(Handle, FragmentShader);
         GL.DeleteShader(VertexShader);
         GL.DeleteShader(FragmentShader);
+    }
+
+    public void SetMatrix4(string uniformName, ref Matrix4 matrix)
+    {
+        int location = GL.GetUniformLocation(Handle, uniformName);
+        if (location == -1)
+            throw new Exception($"Could not find uniform {uniformName} in shader.");
+
+        GL.UniformMatrix4(location, false, ref matrix);
+    }
+
+    public void SetVector3(string uniformName, ref Vector3 vector)
+    {
+        int location = GL.GetUniformLocation(Handle, uniformName);
+        if (location == -1)
+            throw new Exception($"Could not find uniform {uniformName} in shader.");
+
+        GL.Uniform3(location, vector);
+    }
+    public void SetInt(string name, int value)
+    {
+        int location = GL.GetUniformLocation(Handle, name);
+        if (location != -1)
+            GL.Uniform1(location, value);
     }
 
     public int GetAttribLocation(string attribName)
