@@ -10,6 +10,7 @@ public static class Settings
     public static class App
     {
         public static Color4 BackgroundColor = new(0.1f, 0.1f, 0.1f, 1.0f);
+        public static int FrameRateCap = 75;
     }
     public static partial class Camera {
         // General settings
@@ -18,7 +19,6 @@ public static class Settings
 
         // Position settings
         public static readonly float InitialZoomLevel = 2.0f;
-        public static readonly Vector3 CameraPosition = new(0, 0, z: InitialZoomLevel);
     }
 
     public static partial class Controls
@@ -34,12 +34,12 @@ public static class Settings
     public static class Earth
     {
         // Object settings
-        public static readonly float EarthRadius = 2.0f;
+        public static readonly float EarthRadius = 4.0f;
         public static readonly uint EarthSectorCount = 70;
         public static readonly uint EarthStackCount = 70;
 
         // Tile settings
-        public static readonly int InitialResolution = 1024;
+        public static readonly int InitialResolution = 1024 * 2;
     }
 
     public static class Background
@@ -60,7 +60,7 @@ public static class Settings
     public static class Constants
     {
         public static readonly float CameraMinOffset = 0.1f; // Offset to prevent camera clipping
-        public static readonly float ZoomCoefficient = 5f;
+        public static readonly float ZoomCoefficient = 10f;
     }
 
     /*

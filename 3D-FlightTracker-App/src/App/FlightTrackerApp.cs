@@ -38,6 +38,11 @@ public class FlightTrackerApp : GameWindow
         base.OnLoad();
 
         /*
+         * Frame rate
+         */
+        UpdateFrequency = Settings.App.FrameRateCap;
+
+        /*
          * Shaders
          */
 
@@ -47,6 +52,7 @@ public class FlightTrackerApp : GameWindow
         /*
          * OpenGL settings
          */
+
         // Enable depth testing
         GL.Enable(EnableCap.DepthTest);
         // Enable multisampling
@@ -63,7 +69,8 @@ public class FlightTrackerApp : GameWindow
             _width / (float)_height,
             Settings.Camera.NearPlane,
             Settings.Camera.FarPlane);
-        _view = Matrix4.LookAt(Settings.Camera.CameraPosition, Vector3.Zero, Vector3.UnitY);
+        _view = Matrix4.Identity;
+        Controls.Zoom.UpdateZoom(0, ref _view);
         _model = Matrix4.Identity;
 
         /*
@@ -81,6 +88,7 @@ public class FlightTrackerApp : GameWindow
         /*
          * Background
          */
+
         TextureAtlas textureAtlas = new TextureAtlas(Settings.Background.BackgroundImagePath);
         _background = new SphereMesh(100, 100, Settings.Background.BackgroundRadius, [new Texture(textureAtlas.TextureAtlasId)]);
 
@@ -95,6 +103,11 @@ public class FlightTrackerApp : GameWindow
     protected override void OnRenderFrame(FrameEventArgs e)
     {
         base.OnRenderFrame(e);
+
+        // Print the current frame rate
+        // TODO: Make input handling independent of the frame rate (for smooth experience with inconsistent frame rates)
+        System.Console.WriteLine($"3D Flight Tracker | FPS: {1f / e.Time:0}");
+
 
         // Clean the screen with the color set in OnLoad
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
@@ -119,6 +132,8 @@ public class FlightTrackerApp : GameWindow
     protected override void OnUpdateFrame(FrameEventArgs args)
     {
         base.OnUpdateFrame(args);
+
+        // Print the current frame rate
 
         /*
          * Rotation
