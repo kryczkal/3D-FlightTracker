@@ -5,7 +5,7 @@ using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
-namespace _3D_FlightTracker_App;
+namespace _3D_FlightTracker_App.App;
 
 public class FlightTrackerApp : GameWindow
 {
@@ -59,7 +59,7 @@ public class FlightTrackerApp : GameWindow
 
         // Initialize the transformation matrices
         _projection = Matrix4.CreatePerspectiveFieldOfView(
-            float.DegreesToRadians(Settings.Camera.FOV),
+            float.DegreesToRadians(Settings.Camera.Fov),
             _width / (float)_height,
             Settings.Camera.NearPlane,
             Settings.Camera.FarPlane);
@@ -118,95 +118,58 @@ public class FlightTrackerApp : GameWindow
 
     protected override void OnUpdateFrame(FrameEventArgs args)
     {
-        // TODO: This is a temporary solution to get the mouse and keyboard input
-        // It should be replaced with a proper input handling system
-
         base.OnUpdateFrame(args);
 
         /*
-         * Keyboard input
-         */
-        if (KeyboardState.IsKeyDown(Keys.W))
-        {
-            _model *= Matrix4.CreateRotationX(Settings.Camera.KeyboardRotationSpeed);
-        }
-        if (KeyboardState.IsKeyDown(Keys.S))
-        {
-            _model *= Matrix4.CreateRotationX(-Settings.Camera.KeyboardRotationSpeed);
-        }
-        if (KeyboardState.IsKeyDown(Keys.A))
-        {
-            _model *= Matrix4.CreateRotationY(Settings.Camera.KeyboardRotationSpeed);
-        }
-        if (KeyboardState.IsKeyDown(Keys.D))
-        {
-            _model *= Matrix4.CreateRotationY(-Settings.Camera.KeyboardRotationSpeed);
-        }
-        if (KeyboardState.IsKeyDown(Keys.Q))
-        {
-            _model *= Matrix4.CreateRotationZ(Settings.Camera.KeyboardRotationSpeed);
-        }
-        if (KeyboardState.IsKeyDown(Keys.E))
-        {
-            _model *= Matrix4.CreateRotationZ(-Settings.Camera.KeyboardRotationSpeed);
-        }
-
-        if (KeyboardState.IsKeyDown(Keys.Up))
-        {
-            _view *= Matrix4.CreateTranslation(0, 0, Settings.Camera.KeyboardZoomSpeed);
-        }
-        if (KeyboardState.IsKeyDown(Keys.Down))
-        {
-            _view *= Matrix4.CreateTranslation(0, 0, -Settings.Camera.KeyboardZoomSpeed);
-        }
-
-        /*
-         * Mouse input
+         * Rotation
          */
 
-        // Rotate by dragging
+        float deltaX = 0;
+        float deltaY = 0;
+        float deltaZ = 0;
+
+        // Keyboard input
+        if (KeyboardState.IsKeyDown(Keys.A)) deltaY += Settings.Controls.KeyboardRotationSpeed;
+        if (KeyboardState.IsKeyDown(Keys.D)) deltaY += -Settings.Controls.KeyboardRotationSpeed;
+        if (KeyboardState.IsKeyDown(Keys.W)) deltaX += Settings.Controls.KeyboardRotationSpeed;
+        if (KeyboardState.IsKeyDown(Keys.S)) deltaX += -Settings.Controls.KeyboardRotationSpeed;
+        if (KeyboardState.IsKeyDown(Keys.Q)) deltaZ += -Settings.Controls.KeyboardRotationSpeed;
+        if (KeyboardState.IsKeyDown(Keys.E)) deltaZ += Settings.Controls.KeyboardRotationSpeed;
+
+        // Mouse input
         if (MouseState.IsButtonDown(MouseButton.Left))
         {
-            Vector2 delta = MouseState.Position - MouseState.PreviousPosition;
-            _model *= Matrix4.CreateRotationY(delta.X * Settings.Camera.MouseRotationSpeed);
-            _model *= Matrix4.CreateRotationX(delta.Y * Settings.Camera.MouseRotationSpeed);
+            deltaY += (MouseState.Position.X - MouseState.PreviousPosition.X) * Settings.Controls.MouseRotationSpeed;
+            deltaX += (MouseState.Position.Y - MouseState.PreviousPosition.Y)* Settings.Controls.MouseRotationSpeed;
         }
 
-        // Zoom by scrolling
-        if (MouseState.ScrollDelta.Y != 0)
-        {
-            UpdateZoom(MouseState.ScrollDelta.Y);
-        }
+        // Update the rotation
+        if (deltaX != 0 || deltaY != 0 || deltaZ != 0)
+            App.Controls.Rotation.UpdateRotation(deltaX, deltaY, deltaZ, ref _model);
 
-        if (KeyboardState.IsKeyDown(Keys.Escape))
-        {
-            Close();
-        }
+        /*
+         * Zoom
+         */
+
+        // Keyboard input
+        float zoomDelta = 0;
+        if (KeyboardState.IsKeyDown(Keys.Up)) zoomDelta = Settings.Controls.KeyboardZoomSpeed;
+        if (KeyboardState.IsKeyDown(Keys.Down)) zoomDelta = -Settings.Controls.KeyboardZoomSpeed;
+
+        // Mouse input
+        zoomDelta += MouseState.ScrollDelta.Y;
+
+        // Update the zoom
+        if (zoomDelta != 0)
+            App.Controls.Zoom.UpdateZoom(zoomDelta, ref _view);
+
+        /*
+         * Other
+         */
+
+        if (KeyboardState.IsKeyDown(Keys.Escape)) Close();
     }
     
-    // Variables to hold the current zoom level
-    private float _currentZoomLevel = Settings.Camera.InitialZoomLevel;
-
-    /// Method to update the zoom based on scroll input
-    private void UpdateZoom(float scrollDelta)
-    {
-        // Constants for the sigmoid function
-        float k = 1.1f; // steepness of the bell curve
-        float zoomMidpoint = 3f;
-
-        // Calculate the sigmoid factor to adjust the zoom speed
-        float expFactor = MathF.Exp(-k * MathF.Pow(_currentZoomLevel - zoomMidpoint, 2));
-
-        // Calculate the new zoom level
-        float zoomChange = scrollDelta * Settings.Camera.ScrollZoomSpeed * expFactor;
-        _currentZoomLevel += zoomChange;
-
-        // Clamp the zoom level between the min and max distances
-        _currentZoomLevel = Math.Clamp(_currentZoomLevel, Settings.Camera.CameraMinDistance, Settings.Camera.CameraMaxDistance);
-
-        // Apply the zoom transformation
-        _view = Matrix4.LookAt(new Vector3(0,0,_currentZoomLevel), Vector3.Zero, Vector3.UnitY);
-    }
 
 
 
