@@ -1,4 +1,6 @@
-﻿namespace _3D_FlightTracker_App;
+﻿using _3D_FlightTracker_App.App;
+
+namespace _3D_FlightTracker_App;
 
 static class Program
 {
