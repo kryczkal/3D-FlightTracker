@@ -20,8 +20,6 @@ public static class Controls
 
             // Apply the zoom transformation
             view = Matrix4.LookAt(new Vector3(0,0, Settings.Camera.MinDistance + sigmoid), Vector3.Zero, Vector3.UnitY);
-
-            System.Console.WriteLine(CurrentZoomLevel);
         }
     }
 
