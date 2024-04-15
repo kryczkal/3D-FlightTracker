@@ -31,7 +31,7 @@ public static class Controls
             float rotationFactor = 1 / (1 + MathF.Exp(1.1f/Settings.Controls.ZoomSigmoidFactor * (Zoom.CurrentZoomLevel)));
             float rotationX = deltaX * rotationFactor;
             float rotationY = deltaY * rotationFactor;
-            float rotationZ = deltaZ * rotationFactor;
+            float rotationZ = deltaZ * 0.5f;
 
             // Apply the rotation transformation
             model *= Matrix4.CreateRotationX(rotationX) * Matrix4.CreateRotationY(rotationY) * Matrix4.CreateRotationZ(rotationZ);
