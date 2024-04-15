@@ -15,10 +15,10 @@ public class Debug2DMap : IDrawable
         // Create a simple quad
         float[] vertices =
         [
-            -3.0f, -1.0f, 0.0f,
-            -1.0f, -1.0f, 0.0f,
-            -1.0f, 1.0f, 0.0f,
-            -3.0f, 1.0f, 0.0f
+            -3.0f - Settings.Earth.EarthRadius, -1.0f, 0.0f,
+            -1.0f - Settings.Earth.EarthRadius, -1.0f, 0.0f,
+            -1.0f - Settings.Earth.EarthRadius, 1.0f, 0.0f,
+            -3.0f - Settings.Earth.EarthRadius, 1.0f, 0.0f
         ];
 
         float[] normals =
@@ -43,7 +43,7 @@ public class Debug2DMap : IDrawable
             2, 3, 0
         ];
 
-        TextureAtlas = new TextureAtlas();
+        TextureAtlas = new TextureAtlas(Settings.Earth.InitialResolution, Settings.Earth.InitialResolution);
         Earth.InitMapTiles(ref TextureAtlas);
         Mesh = new Mesh(vertices, normals, texCoords, indices,
             [new(TextureAtlas.TextureAtlasId)]);
