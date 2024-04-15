@@ -11,6 +11,11 @@ public class FlightTrackerApp : GameWindow
 {
     Shader.Shader _shader = null!;
     SphereMesh _background = null!;
+
+ #if DEBUG
+    Debug.Debug2DMap _debug2DMap = null!;
+#endif
+
     Earth _earth = null!;
 
     private int _width, _height;
@@ -85,6 +90,10 @@ public class FlightTrackerApp : GameWindow
             Settings.Earth.InitialResolution
             );
 
+#if DEBUG
+        _debug2DMap = new Debug.Debug2DMap();
+#endif
+
         /*
          * Background
          */
@@ -106,8 +115,9 @@ public class FlightTrackerApp : GameWindow
 
         // Print the current frame rate
         // TODO: Make input handling independent of the frame rate (for smooth experience with inconsistent frame rates)
+#if DEBUG
         System.Console.WriteLine($"3D Flight Tracker | FPS: {1f / e.Time:0}");
-
+#endif
 
         // Clean the screen with the color set in OnLoad
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
@@ -124,6 +134,10 @@ public class FlightTrackerApp : GameWindow
         // Draw the Earth
         _earth.Draw(_shader);
         _background.Draw(_shader);
+
+#if DEBUG
+        _debug2DMap.Draw(_shader);
+#endif
 
         // Swap the front and back buffers to present the new frame
         SwapBuffers();
@@ -168,8 +182,8 @@ public class FlightTrackerApp : GameWindow
 
         // Keyboard input
         float zoomDelta = 0;
-        if (KeyboardState.IsKeyDown(Keys.Up)) zoomDelta = Settings.Controls.KeyboardZoomSpeed;
-        if (KeyboardState.IsKeyDown(Keys.Down)) zoomDelta = -Settings.Controls.KeyboardZoomSpeed;
+        if (KeyboardState.IsKeyDown(Keys.Up)) zoomDelta += Settings.Controls.KeyboardZoomSpeed;
+        if (KeyboardState.IsKeyDown(Keys.Down)) zoomDelta += -Settings.Controls.KeyboardZoomSpeed;
 
         // Mouse input
         zoomDelta += MouseState.ScrollDelta.Y;
