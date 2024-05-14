@@ -3,3 +3,4 @@ A 3D representation of the earth that fetches tile from opensourcemaps using Bru
 - [X]  3D representation of the earth with properly plotted map
 - [ ] Map with dynamic LOD (level of detail) that fetches new tiles based on the zoom level
 - [ ] Fetching airplane data from public API's and displaying planes on the sphere
+- [ ] Replace background with a cubemap instead of a sphere
